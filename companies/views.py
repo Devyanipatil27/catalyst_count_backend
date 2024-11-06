@@ -55,10 +55,21 @@ class UploadCSVView(View):
         form = UploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
             csv_file = request.FILES['csv_file']
+            file_path = os.path.join(
+                settings.MEDIA_ROOT, 'company_data', csv_file.name)
+
+            # Create the 'company_data' directory if it doesn't exist
+            os.makedirs(os.path.join(settings.MEDIA_ROOT,
+                        'company_data'), exist_ok=True)
+
+            with open(file_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
+
             try:
                 # Use pandas to read the CSV in chunks
                 chunk_size = 10000  # Process 10,000 rows at a time
-                for chunk in pd.read_csv(csv_file, chunksize=chunk_size):
+                for chunk in pd.read_csv(file_path, chunksize=chunk_size):
                     # Process each row in the chunk
                     for index, row in chunk.iterrows():
                         record_data = {
