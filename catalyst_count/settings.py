@@ -123,8 +123,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media', 'company_data')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824
+FILE_UPLOAD_MAX_MEMORY_SIZE = None
 # Optionally, increase the maximum request size
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576000  # 1 GB
-
-DEFAULT_TIMEOUT = 300  # 5 minutes
+DATA_UPLOAD_MAX_MEMORY_SIZE = None  # 1 GB
