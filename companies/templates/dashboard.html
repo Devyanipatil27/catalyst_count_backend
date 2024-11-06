@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard</h2>
+        <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="upload-tab" data-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="true">Upload Data</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="query-tab" data-toggle="tab" href="#query" role="tab" aria-controls="query" aria-selected="false">Query Builder</a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-4" id="dashboardTabContent">
+        <!-- Upload Data Section -->
+        <div class="tab-pane fade show active" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+            <h3>Upload Data</h3>
+            <p>Here you can upload your data files.</p>
+            
+            <!-- Upload Form -->
+            <form id="uploadForm" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="csvFile">Select CSV File</label>
+                    <input type="file" class="form-control-file" id="csv_file" name="csv_file" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Start Upload</button>
+            </form>
+
+            <!-- Upload Progress -->
+            <div class="mt-4">
+                <label for="progressBar">Upload Progress</label>
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+
+            <!-- Success/Error Message -->
+            <div id="responseMessage" class="mt-4"></div>
+        </div>
+
+        <!-- Query Builder Section -->
+        <div class="tab-pane fade" id="query" role="tabpanel" aria-labelledby="query-tab">
+            <h3>Query Builder</h3>
+            <p>Build your query using the fields below.</p>
+            <form method="post" action="{% url 'query_builder' %}">
+                {% csrf_token %}
+                <!-- Query Form Fields -->
+                <div class="form-group">
+                    <label for="year_founded">Year Founded</label>
+                    <input type="text" class="form-control" id="year_founded" name="year_founded" value="{{ request.POST.year_founded }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <input type="text" class="form-control" id="industry" name="industry" value="{{ request.POST.industry }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="locality">Locality</label>
+                    <input type="text" class="form-control" id="locality" name="locality" value="{{ request.POST.locality }}">
+                    <small class="form-text text-muted">Enter in the format: City, State, Country or City, Country</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <input type="text" class="form-control" id="country" name="country" value="{{ request.POST.country }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+
+            <!-- Display success message -->
+            {% if success_message %}
+                <div class="alert alert-success mt-4" role="alert">
+                    {{ success_message }}
+                </div>
+            {% endif %}
+
+            <!-- Display search results -->
+            {% if records %}
+                <h3>Search Results</h3>
+                <ul>
+                    {% for record in records %}
+                        <li>{{ record.name }} ({{ record.year_founded }}) - {{ record.industry }} - {{ record.locality }} - {{ record.country }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No records found for this query.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Include Bootstrap JS for tab functionality -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+
+        xhr.open('POST', form.action, true);
+
+        // Update the progress bar as the file uploads
+        xhr.upload.addEventListener('progress', function(event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.width = percentComplete + '%';
+                progressBar.setAttribute('aria-valuenow', percentComplete);
+            }
+        });
+
+        xhr.onload = function() {
+            const responseMessage = document.getElementById('responseMessage');
+            if (xhr.status === 200) {
+                // Display success message
+                responseMessage.innerHTML = '<div class="alert alert-success">File uploaded successfully!</div>';
+                // Optionally reload the page or update any content
+            } else {
+                // Handle error (e.g., show an error message)
+                responseMessage.innerHTML = '<div class="alert alert-danger">An error occurred while uploading the file. Please try again.</div>';
+            }
+        };
+
+        xhr.onerror = function() {
+            document.getElementById('responseMessage').innerHTML = '<div class="alert alert-danger">An unexpected error occurred. Please try again later.</div>';
+        };
+
+        xhr.send(formData);
+    });
+</script>
+
+{% endblock %}

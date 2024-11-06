@@ -1,0 +1,12 @@
+Django
+django-allauth
+django-environ
+celery
+psycopg2-binary
+# django-widget-tweak
+tqdm
+djangorestframework
+django-cors-headers
+django-filter
+redis  
+pandas 

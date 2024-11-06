@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Upload Data</h5>
+    </div>
+    <div class="card-body">
+        {% if success_message %}
+            <div class="alert alert-success" role="alert">
+                {{ success_message }}
+            </div>
+        {% endif %}
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                {{ error_message }}
+            </div>
+        {% endif %}
+        <form id="uploadForm" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="csvFile">Select File</label>
+                {{ form.csv_file }}
+            </div>
+            <button type="submit" class="btn btn-primary">Start Upload</button>
+        </form>
+        <div class="mt-4">
+            <label for="progressBar">Upload Progress</label>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+
+        xhr.open('POST', form.action, true);
+
+        // Update the progress bar as the file uploads
+        xhr.upload.addEventListener('progress', function(event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.width = percentComplete + '%';
+                progressBar.setAttribute('aria-valuenow', percentComplete);
+            }
+        });
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                // Handle success (e.g., show a success message)
+                alert('File uploaded successfully!');
+                location.reload(); // Optionally, reload the page
+            } else {
+                // Handle error (e.g., show an error message)
+                alert('An error occurred while uploading the file.');
+            }
+        };
+
+        xhr.send(formData);
+    });
+</script>
+{% endblock %}
