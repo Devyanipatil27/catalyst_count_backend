@@ -3,7 +3,7 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title">Upload Data</h5>
+        <h5 class="card-title">Upload CSV Data</h5>
     </div>
     <div class="card-body">
         {% if success_message %}
@@ -16,14 +16,16 @@
                 {{ error_message }}
             </div>
         {% endif %}
+        
         <form id="uploadForm" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
-                <label for="csvFile">Select File</label>
-                {{ form.csv_file }}
+                <label for="csvFile">Select CSV File</label>
+                {{ form.csv_file }}  <!-- Renders the file input field from the form -->
             </div>
             <button type="submit" class="btn btn-primary">Start Upload</button>
         </form>
+        
         <div class="mt-4">
             <label for="progressBar">Upload Progress</label>
             <div class="progress">
@@ -33,12 +35,13 @@
     </div>
 </div>
 
+<!-- AJAX Script to handle file upload -->
 <script>
     document.getElementById('uploadForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the default form submission
+        event.preventDefault();  // Prevent the default form submission
 
         const form = event.target;
-        const formData = new FormData(form);
+        const formData = new FormData(form);  // Create FormData object with the form data
         const xhr = new XMLHttpRequest();
 
         xhr.open('POST', form.action, true);
@@ -55,16 +58,20 @@
 
         xhr.onload = function() {
             if (xhr.status === 200) {
-                // Handle success (e.g., show a success message)
+                // If upload is successful
                 alert('File uploaded successfully!');
-                location.reload(); // Optionally, reload the page
+                location.reload();  // Optionally reload the page to see the new data
             } else {
-                // Handle error (e.g., show an error message)
+                // If upload fails
                 alert('An error occurred while uploading the file.');
             }
         };
 
-        xhr.send(formData);
+        xhr.onerror = function() {
+            alert('An error occurred with the upload.');
+        };
+
+        xhr.send(formData);  // Send the FormData (including file) to the server
     });
 </script>
 {% endblock %}

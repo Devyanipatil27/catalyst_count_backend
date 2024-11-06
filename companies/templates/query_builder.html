@@ -2,7 +2,11 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Query Builder</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Query Builder</h2>
+        <!-- Add a "Back to Dashboard" button -->
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 
     <!-- Display uploaded files if any -->
     {% if uploaded_files %}
@@ -20,49 +24,43 @@
     <form method="post">
         {% csrf_token %}
         
-        <!-- Keyword Field -->
+        <!-- Form fields for query -->
         <div class="form-group">
             <label for="keyword">Keyword</label>
             <input type="text" class="form-control" id="keyword" name="keyword" value="{{ request.POST.keyword }}">
         </div>
-
-        <!-- Year Founded Field -->
+        
+        <!-- Additional form fields -->
         <div class="form-group">
             <label for="year_founded">Year Founded</label>
             <input type="text" class="form-control" id="year_founded" name="year_founded" value="{{ request.POST.year_founded }}">
         </div>
 
-        <!-- Industry Field -->
         <div class="form-group">
             <label for="industry">Industry</label>
             <input type="text" class="form-control" id="industry" name="industry" value="{{ request.POST.industry }}">
         </div>
 
-        <!-- City Field -->
         <div class="form-group">
             <label for="city">City</label>
             <input type="text" class="form-control" id="city" name="city" value="{{ request.POST.city }}">
         </div>
 
-        <!-- State Field -->
         <div class="form-group">
             <label for="state">State</label>
             <input type="text" class="form-control" id="state" name="state" value="{{ request.POST.state }}">
         </div>
 
-        <!-- Country Field -->
         <div class="form-group">
             <label for="country">Country</label>
             <input type="text" class="form-control" id="country" name="country" value="{{ request.POST.country }}">
         </div>
 
-        <!-- Size Range Field -->
         <div class="form-group">
             <label for="size_range">Size Range</label>
             <input type="text" class="form-control" id="size_range" name="size_range" value="{{ request.POST.size_range }}">
         </div>
 
-        <!-- Employee Range Fields -->
         <div class="form-group">
             <label for="employees_from">Employees From</label>
             <input type="number" class="form-control" id="employees_from" name="employees_from" value="{{ request.POST.employees_from }}">
@@ -91,7 +89,7 @@
         <ul>
             {% for record in records %}
                 <li>
-                    <strong>{{ record.name }}</strong> ({{ record.year_founded }}) - {{ record.industry }} - {{ record.locality }} - {{ record.country }} 
+                    <strong>{{ record.name }}</strong> ({{ record.year_founded }}) - {{ record.industry }} - {{ record.locality }} - {{ record.country }}
                     {% if record.size_range %}- Size: {{ record.size_range }}{% endif %}
                     {% if record.linkedin_url %}- <a href="{{ record.linkedin_url }}" target="_blank">LinkedIn</a>{% endif %}
                 </li>

@@ -48,39 +48,47 @@ class LogoutView(View):
 
 
 class UploadCSVView(View):
-    def get(self, request):
-        form = UploadCSVForm()
-        return render(request, 'upload_csv.html', {'form': form})
-
     def post(self, request):
         form = UploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
             csv_file = request.FILES['csv_file']
             try:
-                # Read the entire CSV file into a DataFrame
                 data = pd.read_csv(csv_file)
+                print("CSV file successfully read. Number of rows:", len(data))
 
-                # Process each row in the DataFrame
+                records_to_create = []
+
                 for index, row in data.iterrows():
-                    # Prepare record data for each row
-                    record_data = {
-                        'domain': row.get('domain', '').strip(),
-                        'year_founded': row.get('year founded'),
-                        'industry': row.get('industry', '').strip(),
-                        'size_range': row.get('size range', '').strip(),
-                        'locality': row.get('locality', '').strip(),
-                        'country': row.get('country', '').strip(),
-                        'linkedin_url': row.get('linkedin url', '').strip(),
-                        'current_employee_estimate': row.get('current employee estimate'),
-                        'total_employee_estimate': row.get('total employee estimate'),
-                    }
+                    # Safely strip values and handle NaNs by setting defaults
+                    def safe_strip(value):
+                        if pd.isna(value):
+                            return None  # Use None if value is missing to handle nullable fields
+                        return str(value).strip()
 
-                    # Use update_or_create to either update or create the record
-                    obj, created = CSVRecord.objects.update_or_create(
-                        # Using 'name' to check for existing record
-                        name=row['name'].strip(),
-                        defaults=record_data,  # Fields to update if the record exists
+                    # Create record with default handling for missing fields
+                    record_data = CSVRecord(
+                        name=safe_strip(row.get('name')),
+                        # Default to 'unknown' if domain is missing
+                        domain=safe_strip(row.get('domain')) or 'unknown',
+                        year_founded=row.get('year founded') if pd.notna(
+                            row.get('year founded')) else None,
+                        industry=safe_strip(row.get('industry')),
+                        size_range=safe_strip(row.get('size range')),
+                        locality=safe_strip(row.get('locality')),
+                        country=safe_strip(row.get('country')),
+                        linkedin_url=safe_strip(row.get('linkedin url')),
+                        current_employee_estimate=row.get(
+                            'current employee estimate'),
+                        total_employee_estimate=row.get(
+                            'total employee estimate'),
                     )
+                    records_to_create.append(record_data)
+                    print(
+                        f"Prepared record for {safe_strip(row.get('name')) or 'Unnamed Company'}")
+
+                # Use bulk_create to add records
+                CSVRecord.objects.bulk_create(records_to_create)
+                print(f"Bulk created {len(records_to_create)} records.")
 
                 return render(request, 'upload_csv.html', {
                     'form': form,
@@ -88,7 +96,7 @@ class UploadCSVView(View):
                 })
 
             except Exception as ex:
-                print(ex)
+                print(f"An error occurred while processing the CSV file: {ex}")
                 return render(request, 'upload_csv.html', {
                     'form': form,
                     'error_message': 'An error occurred while processing the CSV file.'
@@ -119,7 +127,7 @@ class QueryBuilderView(View):
             queryset = queryset.filter(name__icontains=keyword)
 
         if industry:
-            queryset = queryset.filter(name__icontains=industry)
+            queryset = queryset.filter(industry__icontains=industry)
 
         if year_founded:
             queryset = queryset.filter(year_founded=year_founded)

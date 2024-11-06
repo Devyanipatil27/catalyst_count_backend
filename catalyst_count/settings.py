@@ -71,10 +71,18 @@ TEMPLATES = [
 
 # Database configuration
 DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default='postgresql://catalyst_count_db:catalyst_count_db@localhost:5432/catalyst_count_db'
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        # Database name, default to 'catalyst_count_db'
+        'NAME': os.getenv('DB_NAME', 'catalyst_count_db'),
+        # Database user, default to 'catalyst_count_db'
+        'USER': os.getenv('DB_USER', 'catalyst_count_db'),
+        # Database password
+        'PASSWORD': os.getenv('DB_PASSWORD', 'catalyst_count_db'),
+        # Host for the database (for Docker use 'db' service name)
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),  # Default PostgreSQL port
+    }
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -83,17 +91,19 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://redis:6379/1',  # Redis container address
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     }
 }
-
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
-
 SITE_ID = 1
 
 # Allauth configurations
@@ -120,10 +130,10 @@ MEDIA_URL = '/media/'  # URL for accessing uploaded files
 # Full path to the 'company_data' folder inside 'media'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media', 'company_data')
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the broker
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the broker
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = None
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1288490188
 # Optionally, increase the maximum request size
-DATA_UPLOAD_MAX_MEMORY_SIZE = None  # 1 GB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1288490188

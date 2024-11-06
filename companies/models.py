@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 class CSVRecord(models.Model):
     name = models.CharField(max_length=255)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, null=True, blank=True)
     year_founded = models.IntegerField(null=True, blank=True)
     industry = models.CharField(max_length=255, null=True, blank=True)
     size_range = models.CharField(max_length=100, null=True, blank=True)

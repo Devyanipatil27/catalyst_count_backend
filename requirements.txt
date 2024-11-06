@@ -10,3 +10,4 @@ django-cors-headers
 django-filter
 redis  
 pandas 
+django-redis

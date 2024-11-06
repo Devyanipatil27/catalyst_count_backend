@@ -34,7 +34,20 @@ Before starting, make sure you have the following installed on your machine:
    pip install -r requirements.txt
 
 4. **Set up the PostgreSQL database:**:
-   DATABASE_URL=postgresql://catalyst_count_db:catalyst_count_db@localhost:5432/catalyst_count_db
+   
+   createdb catalyst_count_db
+   DB_NAME=catalyst_count_db
+   DB_USER=catalyst_count_db
+   DB_PASSWORD=catalyst_count_db
+   DB_HOST=localhost
+   DB_PORT=5432
+   # Create the user
+   psql -c "CREATE USER your-db-user WITH PASSWORD 'your-db-password';"
+   psql -c "ALTER USER your-db-user CREATEDB;"
+
+   # Grant permissions
+   psql -c "GRANT ALL PRIVILEGES ON DATABASE catalyst_count_db TO your-db-user;"
+   
 
 5. **Run migrations:**:
    python manage.py migrate
