@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import RegisterView, LoginView, DashboardView, LogoutView, UploadCSVView, QueryBuilderView
 
+
 urlpatterns = [
     path('', LoginView.as_view(), name='login'),  # Redirect to login page
     path('register/', RegisterView.as_view(), name='register'),

@@ -113,7 +113,19 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Define the root directory for uploaded files
+# This creates a 'media' folder at the root of your project.
+MEDIA_URL = '/media/'  # URL for accessing uploaded files
+
+# Full path to the 'company_data' folder inside 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media', 'company_data')
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1048576000  # 1 GB
+
+# Optionally, increase the maximum request size
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576000  # 1 GB
+
+DEFAULT_TIMEOUT = 300  # 5 minutes

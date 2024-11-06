@@ -16,3 +16,12 @@ class CSVRecord(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CompanyData(models.Model):
+    name = models.CharField(max_length=255)
+    # Upload directly to 'media/company_data/'
+    csv_file = models.FileField(upload_to='')
+
+    def __str__(self):
+        return self.name

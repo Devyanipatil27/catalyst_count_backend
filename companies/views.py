@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.views import View
@@ -59,30 +56,28 @@ class UploadCSVView(View):
         if form.is_valid():
             csv_file = request.FILES['csv_file']
             try:
-                # Read the entire CSV file into a DataFrame
-                data = pd.read_csv(csv_file)
+                # Use pandas to read the CSV in chunks
+                chunk_size = 10000  # Process 10,000 rows at a time
+                for chunk in pd.read_csv(csv_file, chunksize=chunk_size):
+                    # Process each row in the chunk
+                    for index, row in chunk.iterrows():
+                        record_data = {
+                            'domain': row.get('domain', '').strip(),
+                            'year_founded': row.get('year founded'),
+                            'industry': row.get('industry', '').strip(),
+                            'size_range': row.get('size range', '').strip(),
+                            'locality': row.get('locality', '').strip(),
+                            'country': row.get('country', '').strip(),
+                            'linkedin_url': row.get('linkedin url', '').strip(),
+                            'current_employee_estimate': row.get('current employee estimate'),
+                            'total_employee_estimate': row.get('total employee estimate'),
+                        }
 
-                # Process each row in the DataFrame
-                for index, row in data.iterrows():
-                    # Prepare record data for each row
-                    record_data = {
-                        'domain': row.get('domain', '').strip(),
-                        'year_founded': row.get('year founded'),
-                        'industry': row.get('industry', '').strip(),
-                        'size_range': row.get('size range', '').strip(),
-                        'locality': row.get('locality', '').strip(),
-                        'country': row.get('country', '').strip(),
-                        'linkedin_url': row.get('linkedin url', '').strip(),
-                        'current_employee_estimate': row.get('current employee estimate'),
-                        'total_employee_estimate': row.get('total employee estimate'),
-                    }
-
-                    # Use update_or_create to either update or create the record
-                    obj, created = CSVRecord.objects.update_or_create(
-                        # Using 'name' to check for existing record
-                        name=row['name'].strip(),
-                        defaults=record_data,  # Fields to update if the record exists
-                    )
+                        # Use update_or_create to either update or create the record
+                        obj, created = CSVRecord.objects.update_or_create(
+                            name=row['name'].strip(),
+                            defaults=record_data,
+                        )
 
                 return render(request, 'upload_csv.html', {
                     'form': form,
