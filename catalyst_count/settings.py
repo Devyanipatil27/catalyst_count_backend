@@ -120,6 +120,7 @@ MEDIA_URL = '/media/'  # URL for accessing uploaded files
 # Full path to the 'company_data' folder inside 'media'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media', 'company_data')
 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the broker
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
