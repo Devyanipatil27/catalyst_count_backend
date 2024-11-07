@@ -17,7 +17,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
-
+RUNNING_IN_DOCKER = os.environ.get('RUNNING_IN_DOCKER', 'False') == 'True'
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -52,7 +52,9 @@ MIDDLEWARE = [
 # Update ROOT_URLCONF and WSGI_APPLICATION to the correct project name
 ROOT_URLCONF = 'catalyst_count.urls'
 WSGI_APPLICATION = 'catalyst_count.wsgi.application'
-REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+REDIS_HOST = os.environ.get(
+    'REDIS_HOST', 'redis' if RUNNING_IN_DOCKER else 'localhost')
+REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,15 +75,11 @@ TEMPLATES = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # Database name, default to 'catalyst_count_db'
         'NAME': os.getenv('DB_NAME', 'catalyst_count_db'),
-        # Database user, default to 'catalyst_count_db'
         'USER': os.getenv('DB_USER', 'catalyst_count_db'),
-        # Database password
         'PASSWORD': os.getenv('DB_PASSWORD', 'catalyst_count_db'),
-        # Host for the database (for Docker use 'db' service name)
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),  # Default PostgreSQL port
+        'HOST': os.environ.get('DB_HOST', 'db' if RUNNING_IN_DOCKER else 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -91,19 +89,28 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+# settings.py
+CELERY_BROKER_URL = os.environ.get(
+    'CELERY_BROKER_URL', f'redis://{REDIS_HOST}:{REDIS_PORT}/0')
+CELERY_RESULT_BACKEND = os.environ.get(
+    'CELERY_RESULT_BACKEND', f'redis://{REDIS_HOST}:{REDIS_PORT}/0')
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'  # Adjust as needed
 
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',  # Redis container address
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
 }
+
 SITE_ID = 1
 
 # Allauth configurations
@@ -128,7 +135,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'  # URL for accessing uploaded files
 
 # Full path to the 'company_data' folder inside 'media'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media', 'company_data')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the broker
 # CELERY_ACCEPT_CONTENT = ['json']

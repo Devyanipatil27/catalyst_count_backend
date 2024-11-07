@@ -1,0 +1,46 @@
+# Ignore Python cache files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Ignore virtual environment directories
+venv/
+env/
+.venv/
+
+# Ignore log files
+*.log
+
+# Ignore environment variable files (to avoid exposing secrets)
+.env
+
+# Ignore version control folders
+.git/
+.gitignore
+
+# Ignore database files
+*.sqlite3
+
+# Ignore local configuration files
+*.local
+*.DS_Store
+
+# Ignore node modules (if using any frontend code)
+node_modules/
+
+# Ignore compiled code and temporary files
+*.swp
+*.swo
+*.tmp
+
+# Ignore build and deployment artifacts
+build/
+dist/
+*.egg-info
+*.pytest_cache
+
+# Ignore IDE/editor configuration files
+.vscode/
+.idea/
+*.iml

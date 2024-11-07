@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 
 
 class CSVRecord(models.Model):
@@ -17,11 +16,19 @@ class CSVRecord(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "CSV Record"
+        verbose_name_plural = "CSV Records"
+
 
 class CompanyData(models.Model):
     name = models.CharField(max_length=255)
-    # Upload directly to 'media/company_data/'
-    csv_file = models.FileField(upload_to='')
+    # Upload to 'media/company_data/'
+    csv_file = models.FileField(upload_to='company_data/')
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Company Data"
+        verbose_name_plural = "Company Data Files"

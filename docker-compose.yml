@@ -1,17 +1,19 @@
-version: '3'
+
 
 services:
   # PostgreSQL service
   db:
     image: postgres:latest
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydb
+      POSTGRES_USER: catalyst_count_db
+      POSTGRES_PASSWORD: catalyst_count_db
+      POSTGRES_DB: catalyst_count_db
     ports:
       - "5432:5432"
     networks:
       - backend
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
 
   # Redis service
   redis:
@@ -20,6 +22,8 @@ services:
       - "6379:6379"
     networks:
       - backend
+    volumes:
+      - redis_data:/data
 
   # Django app service
   web:
@@ -32,6 +36,17 @@ services:
     depends_on:
       - db
       - redis
+    environment:
+      - RUNNING_IN_DOCKER=True
+      - DB_NAME=catalyst_count_db
+      - DB_USER=catalyst_count_db
+      - DB_PASSWORD=catalyst_count_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     networks:
       - backend
 
@@ -42,11 +57,26 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - redis
       - db
+      - redis
+    environment:
+      - RUNNING_IN_DOCKER=True
+      - DB_NAME=catalyst_count_db
+      - DB_USER=catalyst_count_db
+      - DB_PASSWORD=catalyst_count_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     networks:
       - backend
 
 networks:
   backend:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

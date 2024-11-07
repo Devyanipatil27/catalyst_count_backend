@@ -7,6 +7,10 @@ import pandas as pd
 from .models import CSVRecord
 from django.contrib import messages
 import logging
+import os
+from django.conf import settings
+from .tasks import process_csv_file
+from django.http import JsonResponse
 
 
 class RegisterView(View):
@@ -47,62 +51,82 @@ class LogoutView(View):
         return redirect('login')
 
 
+# class UploadCSVView(View):
+#     def post(self, request):
+#         form = UploadCSVForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             csv_file = request.FILES['csv_file']
+#             try:
+#                 data = pd.read_csv(csv_file)
+#                 print("CSV file successfully read. Number of rows:", len(data))
+
+#                 records_to_create = []
+
+#                 for index, row in data.iterrows():
+#                     # Safely strip values and handle NaNs by setting defaults
+#                     def safe_strip(value):
+#                         if pd.isna(value):
+#                             return None  # Use None if value is missing to handle nullable fields
+#                         return str(value).strip()
+
+#                     # Create record with default handling for missing fields
+#                     record_data = CSVRecord(
+#                         name=safe_strip(row.get('name')),
+#                         # Default to 'unknown' if domain is missing
+#                         domain=safe_strip(row.get('domain')) or 'unknown',
+#                         year_founded=row.get('year founded') if pd.notna(
+#                             row.get('year founded')) else None,
+#                         industry=safe_strip(row.get('industry')),
+#                         size_range=safe_strip(row.get('size range')),
+#                         locality=safe_strip(row.get('locality')),
+#                         country=safe_strip(row.get('country')),
+#                         linkedin_url=safe_strip(row.get('linkedin url')),
+#                         current_employee_estimate=row.get(
+#                             'current employee estimate'),
+#                         total_employee_estimate=row.get(
+#                             'total employee estimate'),
+#                     )
+#                     records_to_create.append(record_data)
+#                     print(
+#                         f"Prepared record for {safe_strip(row.get('name')) or 'Unnamed Company'}")
+
+#                 # Use bulk_create to add records
+#                 CSVRecord.objects.bulk_create(records_to_create)
+#                 print(f"Bulk created {len(records_to_create)} records.")
+
+#                 return render(request, 'upload_csv.html', {
+#                     'form': form,
+#                     'success_message': 'CSV file processed successfully!'
+#                 })
+
+#             except Exception as ex:
+#                 print(f"An error occurred while processing the CSV file: {ex}")
+#                 return render(request, 'upload_csv.html', {
+#                     'form': form,
+#                     'error_message': 'An error occurred while processing the CSV file.'
+#                 })
+#         else:
+#             return render(request, 'upload_csv.html', {'form': form})
+
 class UploadCSVView(View):
     def post(self, request):
         form = UploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
             csv_file = request.FILES['csv_file']
-            try:
-                data = pd.read_csv(csv_file)
-                print("CSV file successfully read. Number of rows:", len(data))
+            file_path = os.path.join(settings.MEDIA_ROOT, csv_file.name)
 
-                records_to_create = []
+            with open(file_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
 
-                for index, row in data.iterrows():
-                    # Safely strip values and handle NaNs by setting defaults
-                    def safe_strip(value):
-                        if pd.isna(value):
-                            return None  # Use None if value is missing to handle nullable fields
-                        return str(value).strip()
+            # Call Celery task for background processing
+            process_csv_file.delay(file_path)
+            return JsonResponse({'message': 'File uploaded successfully. Processing started.'})
+        return JsonResponse({'error': 'Invalid file upload'}, status=400)
 
-                    # Create record with default handling for missing fields
-                    record_data = CSVRecord(
-                        name=safe_strip(row.get('name')),
-                        # Default to 'unknown' if domain is missing
-                        domain=safe_strip(row.get('domain')) or 'unknown',
-                        year_founded=row.get('year founded') if pd.notna(
-                            row.get('year founded')) else None,
-                        industry=safe_strip(row.get('industry')),
-                        size_range=safe_strip(row.get('size range')),
-                        locality=safe_strip(row.get('locality')),
-                        country=safe_strip(row.get('country')),
-                        linkedin_url=safe_strip(row.get('linkedin url')),
-                        current_employee_estimate=row.get(
-                            'current employee estimate'),
-                        total_employee_estimate=row.get(
-                            'total employee estimate'),
-                    )
-                    records_to_create.append(record_data)
-                    print(
-                        f"Prepared record for {safe_strip(row.get('name')) or 'Unnamed Company'}")
-
-                # Use bulk_create to add records
-                CSVRecord.objects.bulk_create(records_to_create)
-                print(f"Bulk created {len(records_to_create)} records.")
-
-                return render(request, 'upload_csv.html', {
-                    'form': form,
-                    'success_message': 'CSV file processed successfully!'
-                })
-
-            except Exception as ex:
-                print(f"An error occurred while processing the CSV file: {ex}")
-                return render(request, 'upload_csv.html', {
-                    'form': form,
-                    'error_message': 'An error occurred while processing the CSV file.'
-                })
-        else:
-            return render(request, 'upload_csv.html', {'form': form})
+    def get(self, request):
+        form = UploadCSVForm()
+        return render(request, 'upload_csv.html', {'form': form})
 
 
 class QueryBuilderView(View):
